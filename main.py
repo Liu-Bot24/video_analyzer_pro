@@ -9,6 +9,7 @@ import yaml
 import time
 import logging
 import threading
+import queue
 from concurrent.futures import ThreadPoolExecutor
 
 # ==========================================
@@ -43,6 +44,9 @@ logger = logging.getLogger(__name__)
 
 # 全局写入锁
 write_lock = threading.Lock()
+
+# 线程分配队列
+worker_queue = queue.Queue()
 
 def safe_csv_operation(file_path, mode, callback, *args, **kwargs):
     while True:
@@ -127,82 +131,117 @@ def analyze_video(video_path, api_settings, video_settings, category_map, system
     return None
 
 def process_one_video(video_path):
-    # --- 热加载逻辑开始 ---
-    current_config = load_config()
-    while not current_config:
-        time.sleep(1) # 如果读不到（正在编辑），等一秒再读
+    worker_idx = worker_queue.get()
+    try:
+        # --- 热加载逻辑开始 ---
         current_config = load_config()
-    
-    api_cfg = current_config['api']
-    video_cfg = current_config['video']
-    cat_map = current_config['categories']
-    sys_cfg = current_config['system']
-    # --- 热加载逻辑结束 ---
-
-    filename = os.path.basename(video_path)
-    result = analyze_video(video_path, api_cfg, video_cfg, cat_map, sys_cfg)
-    
-    if not result:
-        logger.warning(f"❌ {filename} 识别失败，跳过。")
-        return
-
-    category = "safe"
-    match_cat = re.search(r'\[Category:\s*(.*?)\]', result, re.IGNORECASE)
-    if match_cat:
-        cat_key = match_cat.group(1).lower().strip()
-        if cat_key in cat_map: category = cat_key
+        while not current_config:
+            time.sleep(1) # 如果读不到（正在编辑），等一秒再读
+            current_config = load_config()
         
-    title = "未命名视频"
-    match_title = re.search(r'\[Title:\s*(.*?)\]', result, re.IGNORECASE)
-    if match_title:
-        title = match_title.group(1).strip()[:15]
-    else:
-        title = re.sub(r'\[.*?\]', '', result).strip()[:15].replace('\n', ' ')
-
-    csv_path = os.path.join(SOURCE_DIR, sys_cfg['csv_file'])
-    
-    with write_lock:
-        def write_callback(f):
-            writer = csv.writer(f)
-            writer.writerow([filename, result, title])
+        api_cfg = current_config['api'].copy()
+        video_cfg = current_config['video']
+        cat_map = current_config['categories']
+        sys_cfg = current_config['system']
         
-        try:
-            safe_csv_operation(csv_path, "a", write_callback)
-            dest_folder = os.path.join(SOURCE_DIR, os.path.normpath(cat_map[category]['path']))
-            os.makedirs(dest_folder, exist_ok=True)
+        endpoints = api_cfg.get('endpoints', [])
+        if endpoints:
+            # 动态获取当前线程对应的模型配置
+            idx = worker_idx if worker_idx < len(endpoints) else (worker_idx % len(endpoints))
+            endpoint = endpoints[idx]
+            api_cfg['key'] = endpoint['key']
+            api_cfg['base_url'] = endpoint['base_url']
+            api_cfg['model'] = endpoint['model']
+        # --- 热加载逻辑结束 ---
+
+        filename = os.path.basename(video_path)
+        result = analyze_video(video_path, api_cfg, video_cfg, cat_map, sys_cfg)
+        
+        if not result:
+            logger.warning(f"❌ {filename} 识别失败，跳过。")
+            return
+
+        category = "safe"
+        match_cat = re.search(r'\[Category:\s*(.*?)\]', result, re.IGNORECASE)
+        if match_cat:
+            cat_key = match_cat.group(1).lower().strip()
+            if cat_key in cat_map: category = cat_key
             
-            safe_title = re.sub(r'[\\/:*?"<>|]', '', title).strip()
-            name_part, ext_part = os.path.splitext(filename)
+        title = "未命名视频"
+        match_title = re.search(r'\[Title:\s*(.*?)\]', result, re.IGNORECASE)
+        if match_title:
+            title = match_title.group(1).strip()[:15]
+        else:
+            title = re.sub(r'\[.*?\]', '', result).strip()[:15].replace('\n', ' ')
+
+        csv_path = os.path.join(SOURCE_DIR, sys_cfg['csv_file'])
+        
+        with write_lock:
+            def write_callback(f):
+                writer = csv.writer(f)
+                writer.writerow([filename, result, title])
             
-            if video_cfg['auto_rename']:
-                if video_cfg.get('keep_original_name', True):
-                    base_name = f"{safe_title}_{name_part}"
-                else:
-                    base_name = safe_title
-            else:
-                base_name = name_part
-            
-            final_name = f"{base_name}{ext_part}"
-            final_path = os.path.join(dest_folder, final_name)
-            counter = 1
-            while os.path.exists(final_path):
-                final_name = f"{base_name}_{counter}{ext_part}"
-                final_path = os.path.join(dest_folder, final_name)
-                counter += 1
+            try:
+                safe_csv_operation(csv_path, "a", write_callback)
+                dest_folder = os.path.join(SOURCE_DIR, os.path.normpath(cat_map[category]['path']))
+                os.makedirs(dest_folder, exist_ok=True)
                 
-            shutil.move(video_path, final_path)
-            logger.info(f"✅ {filename} -> {category} | 存为: {final_name}")
-        except Exception as e:
-            logger.error(f"落地执行失败 {filename}: {e}")
+                safe_title = re.sub(r'[\\/:*?"<>|]', '', title).strip()
+                name_part, ext_part = os.path.splitext(filename)
+                
+                if video_cfg['auto_rename']:
+                    if video_cfg.get('keep_original_name', True):
+                        base_name = f"{safe_title}_{name_part}"
+                    else:
+                        base_name = safe_title
+                else:
+                    base_name = name_part
+                
+                final_name = f"{base_name}{ext_part}"
+                final_path = os.path.join(dest_folder, final_name)
+                counter = 1
+                while os.path.exists(final_path):
+                    final_name = f"{base_name}_{counter}{ext_part}"
+                    final_path = os.path.join(dest_folder, final_name)
+                    counter += 1
+                    
+                shutil.move(video_path, final_path)
+                logger.info(f"✅ {filename} -> {category} | 模型: {api_cfg.get('model', 'unknown')} | 存为: {final_name}")
+            except Exception as e:
+                logger.error(f"落地执行失败 {filename}: {e}")
+    finally:
+        worker_queue.put(worker_idx)
 
 def main():
     initial_sys_cfg = initial_config['system']
+    
+    # 确定并发数并初始化队列
+    endpoints = initial_config['api'].get('endpoints', [])
+    if endpoints:
+        concurrency = len(endpoints)
+    else:
+        concurrency = initial_sys_cfg.get('concurrency', 2)
+        
+    for i in range(concurrency):
+        worker_queue.put(i)
+
     csv_path = os.path.join(SOURCE_DIR, initial_sys_cfg['csv_file'])
     
     if not os.path.exists(csv_path):
         def init_callback(f):
             csv.writer(f).writerow(["Filename", "Full Result", "Title"])
         safe_csv_operation(csv_path, "w", init_callback)
+    else:
+        # 检查现存的 CSV 是否有 UTF-8 BOM，没有则补上，防止 Excel 打开乱码
+        try:
+            with open(csv_path, 'r+b') as f:
+                if f.read(3) != b'\xef\xbb\xbf':
+                    f.seek(0)
+                    content = f.read()
+                    f.seek(0)
+                    f.write(b'\xef\xbb\xbf' + content)
+        except Exception as e:
+            logger.warning(f"检查/修复 CSV BOM 失败: {e}")
 
     def read_callback(f):
         res = set()
@@ -221,7 +260,7 @@ def main():
     logger.info(f"扫描完成: 总计 {len(all_videos)}，已处理 {len(processed_files)}，待处理 {len(pending_videos)}。支持热切换配置。")
 
     if pending_videos:
-        with ThreadPoolExecutor(max_workers=initial_sys_cfg['concurrency']) as executor:
+        with ThreadPoolExecutor(max_workers=concurrency) as executor:
             executor.map(process_one_video, pending_videos)
     else:
         logger.info("任务已全部完成。")
