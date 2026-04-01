@@ -44,13 +44,13 @@ All core logic and parameters of this project are driven by config.yaml, support
 ### [API Core Connection]
 | Parameter | Description |
 | :--- | :--- |
-| pi.key | API access key (supports major platforms compatible with the OpenAI format). |
-| pi.base_url | Base URL for API requests. |
-| pi.endpoints | **[Core Feature]** Multi-model configuration list. The list contains key, ase_url, model. The program will launch as many concurrent threads as there are nodes configured for asynchronous processing. |
-| pi.timeout | Maximum timeout for a single network request (seconds). Prevents hanging on large image transmissions. Recommended: 180s. |
-| pi.max_retries | Number of automatic retries after an interface request failure (e.g., network fluctuation/rate limiting). |
-| pi.temperature | Sampling temperature (0.0-1.0). Lower values (e.g., 0.1) keep classification outputs strict and deterministic. |
-| pi.max_tokens | Maximum Token length allowed for model generation. |
+| `api.key` | API access key (supports major platforms compatible with the OpenAI format). |
+| `api.base_url` | Base URL for API requests. |
+| `api.endpoints` | **[Core Feature]** Multi-model configuration list. The list contains `key`, `base_url`, `model`. The program will launch as many concurrent threads as there are nodes configured for asynchronous processing. |
+| `api.timeout` | Maximum timeout for a single network request (seconds). Prevents hanging on large image transmissions. Recommended: 180s. |
+| `api.max_retries` | Number of automatic retries after an interface request failure (e.g., network fluctuation/rate limiting). |
+| `api.temperature` | Sampling temperature (0.0-1.0). Lower values (e.g., 0.1) keep classification outputs strict and deterministic. |
+| `api.max_tokens` | Maximum Token length allowed for model generation. |
 
 ### [Video Preprocessing]
 | Parameter | Description |
@@ -65,17 +65,17 @@ All core logic and parameters of this project are driven by config.yaml, support
 ### [Classification Auditing & Storage Rules]
 | Parameter | Description |
 | :--- | :--- |
-| categories | **Fully Customizable Auditing Rule Library**. Contains any number of classification Keys you define (e.g., iolence, sex, etc.), which will be sent to the AI as identification tags. |
-| path | The target subdirectory where the video will be physically moved when the identification conclusion matches this class. |
-| desc | **Visual Criteria Sent to AI**. Guides the AI to make accurate classifications through detailed and objective feature descriptions. |
+| `categories` | **Fully Customizable Auditing Rule Library**. Contains any number of classification Keys you define (e.g., iolence, sex, etc.), which will be sent to the AI as identification tags. |
+| `path` | The target subdirectory where the video will be physically moved when the identification conclusion matches this class. |
+| `desc` | **Visual Criteria Sent to AI**. Guides the AI to make accurate classifications through detailed and objective feature descriptions. |
 
 ### [System Operation Behavior]
 | Parameter | Description |
 | :--- | :--- |
-| system.concurrency | The number of concurrent threads effective when the pi.endpoints list is not configured. Default is 1, generally 2-4 is safer. |
-| system.csv_file | The filename for the final recognition results summary spreadsheet. |
-| system.log_file | The filename for the detailed operation log during execution. |
-| system.prompt_template | **Core Brain**: The Prompt template sent to the AI, which automatically extracts the desc rules above for dynamic injection. |
+| `system.concurrency` | The number of concurrent threads effective when the `api.endpoints` list is not configured. Default is 1, generally 2-4 is safer. |
+| `system.csv_file` | The filename for the final recognition results summary spreadsheet. |
+| `system.log_file` | The filename for the detailed operation log during execution. |
+| `system.prompt_template` | **Core Brain**: The Prompt template sent to the AI, which automatically extracts the desc rules above for dynamic injection. |
 
 ## 🛠️ Technical Guarantees
 
