@@ -1,5 +1,7 @@
 # Video Analyzer Pro | 视频内容审计与智能分类工具
 
+> **💡 图片处理需求？** 如果您需要进行海量图片的智能分拣、合规审计与自动化归档，请使用姊妹项目：[Image Analyzer Pro](https://github.com/Liu-Bot24/img_analyzer_pro)
+
 Video Analyzer Pro 是一款基于视觉大语言模型 (VLM) 的高性能视频审计与全场景分类工具。它专为大规模视频库设计，通过高度自定义的提示词 (Prompt) 逻辑，将海量视频的“内容理解、合规审查、自动分类与重命名”一站式自动化。
 
 ## 🌟 为什么选择它？
@@ -21,7 +23,8 @@ Video Analyzer Pro 是一款基于视觉大语言模型 (VLM) 的高性能视频
 ### 1. 准备环境与 API 建议
 - 确保系统连接互联网。
 - 准备一个支持 Vision 能力的 OpenAI 兼容接口（例如[SiliconFlow 平台](https://cloud.siliconflow.cn/i/My0p5Jgs)）。
-- **性能提示**：建议根据预算和速度需求在 `config.yaml` 中选择不同的模型梯度，如 `THUDM/GLM-4.1V-9B-Thinking`（支持免费使用）、`GLM-4.6V`、`Qwen3-VL-30B-A3B` 等。但需要注意，由于不同计费模式的模型具有不同的 **TPM (Tokens Per Minute)** 频率限制，如追求处理速度还是建议自己购买适配的 AI 模型服务。
+- **性能提示**：建议根据预算和速度需求在 `config.yaml` 中选择不同的模型梯度，如 `THUDM/GLM-4.1V-9B-Thinking`（支持免费使用）、`Qwen/Qwen3-VL-32B-Instruct`（TPM较高）、`GLM-4.6V`、`Qwen3-VL-30B-A3B` 等。但需要注意，由于不同计费模式的模型具有不同的 **TPM (Tokens Per Minute)** 频率限制，如追求处理速度还是建议自己购买适配的 AI 模型服务。
+- 如对模型表现稳定性要求宽松，可使用[此版本](https://github.com/Liu-Bot24/video_analyzer_pro/tree/multi-model-threads)。支持配置多个薅羊毛得来的免费/低价模型并发线程进行异步处理，突破TPM限制，提高速度。
 
 ### 2. 配置与运行
 1.  **编辑 config.yaml**：填入您的 API 密钥和视频目录。
@@ -65,7 +68,7 @@ Video Analyzer Pro 是一款基于视觉大语言模型 (VLM) 的高性能视频
 ### [系统运行行为配置]
 | 配置项 | 说明 |
 | :--- | :--- |
-| `system.concurrency` | 并发处理的线程数量，建议根据您的 API 频率限制（RPM）进行调节，通常 2-4 较为安全。 |
+| `system.concurrency` | 并发处理的线程数量，建议根据您的 API 频率限制（RPM）进行调节，通常 1-4 较为安全。 |
 | `system.csv_file` | 最终识别结果汇总电子表格的存放名称。 |
 | `system.log_file` | 运行过程中的详细操作日志文件名。 |
 | `system.prompt_template` | **核心大脑**：发送给 AI 的提示词模板，自动提取上方的 `desc` 规则完成动态注入。 |
