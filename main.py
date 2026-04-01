@@ -161,11 +161,15 @@ def process_one_video(video_path):
             logger.warning(f"❌ {filename} 识别失败，跳过。")
             return
 
-        category = "safe"
+        # 使用配置中定义的第一个分类作为默认值，防止硬编码导致崩溃
+        category = list(cat_map.keys())[0] if cat_map else "safe"
         match_cat = re.search(r'\[Category:\s*(.*?)\]', result, re.IGNORECASE)
         if match_cat:
             cat_key = match_cat.group(1).lower().strip()
-            if cat_key in cat_map: category = cat_key
+            if cat_key in cat_map:
+                category = cat_key
+            else:
+                logger.warning(f"⚠️ AI 返回了未定义的分类: {cat_key}，已回退到默认分类: {category}")
             
         title = "未命名视频"
         match_title = re.search(r'\[Title:\s*(.*?)\]', result, re.IGNORECASE)
