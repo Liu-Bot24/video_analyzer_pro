@@ -89,8 +89,8 @@ categories:
 
 # [系统运行行为配置]
 system:
-  # 并发数现由 api.endpoints 列表长度自动决定（旧版仍可通过此项配置并发数）
-  concurrency: 2
+  # 并发数。仅在未配置 api.endpoints 列表时生效。通常 2-4 较为安全。
+  concurrency: 1
   
   # 最终识别结果汇总表的名称，存放在 source_dir 目录下
   csv_file: "analysis_results_pro.csv"

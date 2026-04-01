@@ -224,7 +224,7 @@ def main():
     if endpoints:
         concurrency = len(endpoints)
     else:
-        concurrency = initial_sys_cfg.get('concurrency', 2)
+        concurrency = initial_sys_cfg.get('concurrency', 1)
         
     for i in range(concurrency):
         worker_queue.put(i)
