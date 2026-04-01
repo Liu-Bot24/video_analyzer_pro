@@ -86,8 +86,8 @@ categories:
 
 # [系统运行行为配置]
 system:
-  # 并发处理的线程数量。建议根据 API 的速率限制 (RPM) 调节，通常 2-4 较为安全
-  concurrency: 2
+  # 并发处理的线程数量。建议根据 API 的速率限制 (RPM) 调节，通常 1-4 较为安全
+  concurrency: 1
   
   # 最终识别结果汇总表的名称，存放在 source_dir 目录下
   csv_file: "analysis_results_pro.csv"
