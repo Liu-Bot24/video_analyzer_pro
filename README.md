@@ -1,5 +1,11 @@
 ﻿# Video Analyzer Pro | 视频内容审计与智能分类工具
 
+<p align="center">
+  <a href="README.md">简体中文</a> | <a href="README_EN.md">English</a>
+</p>
+
+> **💡 图片处理需求？** 如果您需要进行海量图片的智能分拣、合规审计与自动化归档，请使用姊妹项目：[Image Analyzer Pro](https://github.com/Liu-Bot24/img_analyzer_pro)
+
 Video Analyzer Pro 是一款基于视觉大语言模型 (VLM) 的高性能视频审计与全场景分类工具。它专为大规模视频库设计，通过高度自定义的提示词 (Prompt) 逻辑，将海量视频的“内容理解、合规审查、自动分类与重命名”一站式自动化。
 
 ## 🌟 为什么选择它？
