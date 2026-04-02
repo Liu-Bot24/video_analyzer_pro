@@ -72,7 +72,7 @@ Video Analyzer Pro 是一款基于视觉大语言模型 (VLM) 的高性能视频
 ### [系统运行行为配置]
 | 配置项 | 说明 |
 | :--- | :--- |
-| `system.concurrency` | 当未配置 `api.endpoints` 列表时生效的并发数（默认值为 1）。通常 2-4 较为安全。 |
+| `system.concurrency` | 当未配置 `api.endpoints` 列表时生效的并发数（默认值为 1）。通常 1-4 较为安全。 |
 | `system.csv_file` | 最终识别结果汇总电子表格的存放名称。 |
 | `system.log_file` | 运行过程中的详细操作日志文件名。 |
 | `system.prompt_template` | **核心大脑**：发送给 AI 的提示词模板，自动提取上方的 `desc` 规则完成动态注入。 |
